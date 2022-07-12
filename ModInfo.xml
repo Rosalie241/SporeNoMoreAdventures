@@ -1,0 +1,8 @@
+<mod displayName="SporeNoMoreAdventures" 
+	unique="SporeNoMoreAdventures" 
+	description="This is a Spore mod which removes adventures (made by Auntie Owl and Rosalie)" 
+	installerSystemVersion="1.0.1.1" 
+	dllsBuild="2.5.20">
+	<prerequisite>SporeNoMoreAdventures.dll</prerequisite>
+	<prerequisite game="GalacticAdventures">MrsWhitesAdventuresBegoneV1.package</prerequisite>
+</mod>
