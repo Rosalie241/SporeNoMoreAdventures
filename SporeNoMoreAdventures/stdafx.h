@@ -17,3 +17,4 @@
 
 // This is used everywhere
 #include <Spore\BasicIncludes.h>
+#include <Spore\Simulator\cMission.h>

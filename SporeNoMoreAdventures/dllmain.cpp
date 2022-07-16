@@ -14,8 +14,10 @@
 
 #include <Windows.h>
 
+using namespace Simulator;
+
 //
-// Helper functions
+// Helper Functions
 //
 
 static void DisplayError(const char* fmt, ...)
@@ -31,68 +33,39 @@ static void DisplayError(const char* fmt, ...)
 }
 
 //
+// Detoured Functions
+//
+
+class cMissionManager
+{
+public:
+	// padding
+	int m1; int m2;	int m3;	int m4;	int m5;	int m6; int m7; int m8; int m9; int m10;
+	int m11; int m12; int m13; int m14; int m15; int m16; int m17; int m18; int m19;
+	int m20; int m21; int m22; int m23;
+
+	// 0x5C
+	eastl::map<uint32_t, int> m_missionMap;
+};
+
+member_detour(ChooseMissionFunctionDetour, cMissionManager, cMission*(cEmpire*, cPlanetRecord*))
+{
+	cMission* detoured(cEmpire* cEmpire, cPlanetRecord* cPlanetRecord)
+	{
+		// set mission Adventures101 to completed
+		m_missionMap[0x2AB57FAC] = 1;
+
+		return original_function(this, cEmpire, cPlanetRecord);
+	}
+};
+
+
+//
 // Exported Functions
 //
 
 void Initialize()
 {
-	BOOL ret;
-	DWORD_PTR address = (DWORD_PTR)GetModuleHandle(nullptr) + 0xBEEDA2;
-
-	SIZE_T bytesWritten = 0;
-	SIZE_T bytesRead = 0;
-	const SIZE_T bytesSize = 31;
-	BYTE readBytes[bytesSize] = { 0 };
-	BYTE originalBytes[] =
-	{
-		0x8B, 0x44, 0x24, 0x40, 0x53, 0x55, 0x50, 0x68, 0xAC, 0x7F,
-		0xB5, 0x2A, 0x8B, 0xCE, 0xE8, 0x6B, 0xD6, 0xFF, 0xFF, 0x89,
-		0x44, 0x24, 0x14, 0x3B, 0xC3, 0x0F, 0x85, 0xF7, 0x01, 0x00,
-		0x00
-	};
-	BYTE replacementBytes[] = 
-	{
-		0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
-		0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
-		0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
-		0x90
-	};
-
-	ret = ReadProcessMemory(GetCurrentProcess(), (LPVOID)address, readBytes, bytesSize, &bytesRead);
-	if (!ret)
-	{
-		DisplayError("ReadProcessMemory() Failed!");
-		return;
-	}
-
-	if (bytesRead != bytesSize)
-	{
-		DisplayError("bytesRead != bytesSize");
-		return;
-	}
-
-	// make sure we aren't replacing random bytes,
-	// but the original bytes we expect
-	if (memcmp(readBytes, originalBytes, bytesSize) != 0)
-	{
-		DisplayError("bytes don't match! Are you running a supported version of Spore?");
-		return;
-	}
-
-	ret = WriteProcessMemory(GetCurrentProcess(), (LPVOID)address, replacementBytes, bytesSize, &bytesWritten);
-	if (!ret)
-	{
-		DisplayError("WriteProcessMemory() Failed!");
-		return;
-	}
-
-	if (bytesWritten != bytesSize)
-	{
-		DisplayError("bytesWritten != sizeof(bytes)");
-		return;
-	}
-
-
 	// This method is executed when the game starts, before the user interface is shown
 	// Here you can do things such as:
 	//  - Add new cheats
@@ -109,6 +82,8 @@ void Dispose()
 
 void AttachDetours()
 {
+	ChooseMissionFunctionDetour::attach(Address(ModAPI::ChooseAddress(0xFEF450, 0xFEEBC0)));
+
 	// Call the attach() method on any detours you want to add
 	// For example: cViewer_SetRenderType_detour::attach(GetAddress(cViewer, SetRenderType));
 }
